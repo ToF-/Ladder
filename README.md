@@ -11,7 +11,7 @@ Here are some examples :
 - *grape grace brace bract brant brunt bruit fruit*
 
 
-In this kata, you are given a list of words, such as [this one](http://www-personal.umich.edu/~jlawler/wordlist.html), and your job is to write a program that prints the shortest word ladder between two given words. 
+In this kata, you are given a list of words, such as [this one](http://www-personal.umich.edu/~jlawler/wordlist.html), and your job is to write a program that prints as short a ladder as possible between two given words. 
 
 The program will read 3 arguments on the command line:
 
@@ -73,9 +73,9 @@ type Neighbors = (String,String)
 ```
 Write a function
 ```Haskell
-neighbors :: [String] -> String -> [Neighbors]
+neighbors :: String -> [String] -> [Neighbors]
 ```
-that given a list of words `ws` and a word `w`, yields a list `[(n,w),(m,w),..,(z,w)]` of all the neighbors to `w` in `ws`.
+that given a word `w` and a list of words `ws`, yields a list `[(n,w),(m,w),..,(z,w)]` of all the neighbors to `w` in `ws`.
 
 Here's an example of use of this function:
 ```Haskell
@@ -90,11 +90,18 @@ it :: [Neighbors]
 ```
 *What does the expression* `map (neighbors ws) ws` *yield?*
 ## 3. Path
-With the help of standard functions such as `lookup` on a list of `Neighbor`s,it is possible to follow a certain *path* from word to word. Write a function:
+The standard function
+```Haskell
+lookup :: Eq a => a -> [(a, b)] -> Maybe b 
+```
+when given a key `k` and a list of pairs `ps`, will return `Just v` if the pair `(k,v)` is present in the list, `Nothing` if this pair is not present.
+ 
+Using `lookup`, write a function:
+
 ```Haskell
 path :: String -> [Neighbors] -> [String]
 ```
-that given a word `w` and a list of pairs of words `ns`, looks up in that list for the word `x` that is attached to `w`, then for the word `y` that is attached to `x`  and so on, until the next word cannot be found in the list. The result of the function is the list `[w,x,y,..,z]` of the all the words found on the path.
+that given a word `w` and a list of pairs of words `ns`, looks up in that list for the word `x` that is attached to `w`, then for the word `y` that is attached to `x`  and so on, until the next word cannot be found in the list. The result of the function is the list `[w,x,y,..,z]` of all the words found on the path.
 
 Here's an example of use of this function:
 ```Haskell
@@ -104,6 +111,8 @@ path "cat" ns ⏎
 path "foo" ns ⏎
 []
 ```
+*What is the result of `path` if the list contains several pairs having the same word as key ?*
+
 *For this function to always terminate, what should be true about the list given as second argument?*
 ## 4. Neighbors of neighbors
 What happens if, armed with the functions we have so far, we try to find neighbors of neighbors? Let's try.
@@ -158,14 +167,15 @@ explore ws "fog" (snd it) ⏎
 ([],[("fog",""),("bog","fog"),("cog","fog"),("dog","fog"),("bat","bag")])
 ```
 ## 6. Breadth Search
-Finding the shortest path between two words involve a *breadth first search* strategy, meaning that all the neighbors of a word should have been visited before the neighbors of these neighbors are. The search process maintains a *queue* of wordt to visit, and each exploration step extracts the word at the top of the queue, and add the neighbors of this word at the end of the queue.
-The process stops either when the list is empty, or when the head of the queue is the word that was sought for.
- 
-Write a function 
+Finding the shortest path between two words involve a *breadth first search* strategy, meaning that all the neighbors of a word should have been visited before the neighbors of these neighbors are. The search process maintains a *queue* of wordt to visit, and each exploration step extracts the word at the top of the queue, and add the neighbors of this word at the end of the queue. The process stops either when the list is empty, or when the head of the queue is the word that was sought for.
+
+The function 
 ```Haskell
 breadthSearch :: [String] -> State -> State
 ```
-that given a list of word `ws`, an a state `([v,w,..,y],t)`, returns a new state `([w,..y,n,m,..,o],t')` such that:
+will be in charge of this search process.
+### 6.1 Search neighbors, yield new state
+Let's start with the first half of the task at hand: implement the `breadthSearch` function so that when it is given a list of word `ws`, and a state `([v,w,..,y],t)`, it returns a new state `([w,..y,n,m,..,o],t')` where:
 - the words `[n,m,..,o]` are neighbors of `v` in `ws` that are not already present in `t`
 - the new tree `t'` has all the neighbor pairs from `t` plus the neighbor pairs `[(n,v),(m,v),..,(o,v)]`
 
@@ -173,34 +183,64 @@ Here are examples of use of this function:
 ```Haskell
 let ws = words "bag bat bog cat cog dog fog"
 
-breadthSearch ws (["fog"],[("fog","")])
+let st = breadthSearch ws (["fog"],[("fog","")]) ⏎
+st ⏎
 (["bog","cog","dog"],[("fog",""),("bog","fog"),("cog","fog"),("dog","fog")])
 
-breadthSearch ws it
+let st' = breadthSearch ws st ⏎
+st' ⏎
 (["cog","dog","bag"],[("fog",""),("bog","fog"),("cog","fog"),("dog","fog"),("bag","bog")])
-
-breadthSearch ws it
-(["dog","bag"],[("fog",""),("bog","fog"),("cog","fog"),("dog","fog"),("bag","bog")])
-
-breadthSearch ws it
-(["bag"],[("fog",""),("bog","fog"),("cog","fog"),("dog","fog"),("bag","bog")])
-
-breadthSearch ws it
-(["bat"],[("fog",""),("bog","fog"),("cog","fog"),("dog","fog"),("bag","bog"),("bat","bag")])
-
-breadthSearch ws it
-(["cat"],[("fog",""),("bog","fog"),("cog","fog"),("dog","fog"),("bag","bog"),("bat","bag"),("cat","bat")])
-
-breadthSearch ws it
-([],[("fog",""),("bog","fog"),("cog","fog"),("dog","fog"),("bag","bog"),("bat","bag"),("cat","bat")])
 ```
-*What should be added to the function definition for the function to be total ?*
+*What initial state would allow for a breadth first search of a given word, starting from `t` ?*
+### 6.2 Stop when there's no more words to visit
+Update the function `breadthSearch` so that when given a state `([],ps)`, meaning that there is no more words to visit, then the result is equal to the state given in argument.
 
-*What initial state would allow for a breadth first search of word `s` starting from `t` ?*
-### 7. Ladder 
-In order to determine the shortest ladder between two words from a list, we have to process with our `breadthSearch` function, starting with an inital state set to `([t],[(t,"")])` where `t` is the last word of the ladder, and then recurse until one of two things happen:
-- the list of words to visit is empty, which means that there is no possible ladder
-- the first word in the list is the starting word in the ladder
+Here are new examples of use:
+```Haskell
+let ws = words "dog fog" ⏎
+
+breadthSearch ws (["fog"],[("fog","")]) ⏎
+(["dog"],[("fog",""),("dog","fog")])
+
+breadthSearch ws $ breadthSearch ws (["fog"],[("fog","")]) ⏎
+([],[("fog",""),("dog","fog")])
+
+breadthSearch ws $ breadthSearch ws $ breadthSearch ws (["fog"],[("fog","")]) ⏎
+([],[("fog",""),("dog","fog")])
+```
+*Given the word list `ws = words "bag bat cat cot cog dog fog fig"` and an initial state `st = (["dog"],[("dog","")]` how many iterations of `breadthSearch ws` are necessary for the resulting state to contain a path from "cat" to "dog" ?*
+
+*How many iterations of applying `breadthSearch ws` are necessary for the resulting state to contain an empty visit queue?* 
+### 6.3 Stop when a word has been found
+Searching a word list *ws* starting from a word *t* until there's no more words to visit yields a tree that contains all the possible paths to the word *t*. If we are looking for a specific path between a word *s* and *t*, this search represents a lot of overhead.
+
+Updtate the function `breadthSearch`, including its signature:
+```Haskell
+breadthSearch :: [String] -> String -> State -> State
+```
+So that the function, when given a word list *ws*, a stop word *s*, and an initial state *st*, will perform a breadth first search on *ws*, stopping when there are no more words to visit, or when the top of the visit queue is *s*.
+
+Here are new examples of use:
+```Haskell
+let ws = words "dog fog fig" ⏎
+breadthSearch ws "dog" (["fog"],[("fog","")]) ⏎
+(["dog","fig"],[("fog",""),("dog","fog"),("fig","fog")])
+breadthSearch ws "dog" $ breadthSearch ws "dog" (["fog"],[("fog","")]) ⏎
+(["dog","fig"],[("fog",""),("dog","fog"),("fig","fog")])
+breadthSearch ws "dog" $ breadthSearch ws "dog" $ breadthSearch ws "dog" (["fog"],[("fog","")]) ⏎
+(["dog","fig"],[("fog",""),("dog","fog"),("fig","fog")])
+```
+### 6.4 Iterate until the search is done
+Now that we have all the different parts of `breadthSearch` right, the last thing to do is to iterate on the search process. Update the function so that when given a word list *ws*, a stop word *s* and state *st*, it searches *ws* until its visit queue is empty or the top of the queue is equal to *s*.
+
+Here are new examples of use:
+```Haskell
+let ws = words "bog dog fog fig bag bat cat" ⏎
+breadthSearch ws "dog" (["fig"],[("fig","")]) ⏎
+(["dog","bag"],[("fig",""),("fog","fig"),("bog","fog"),("dog","fog"),("bag","bog")])
+```
+## 7. Ladder 
+In order to determine a minimal ladder between two words from a list, we have to process the word list with our `breadthSearch` function, starting with an inital state set to `([t],[(t,"")])` where `t` is the last word of the ladder, and then exploit the second half of the resulting state.
 
 Write a function:
 ```Haskell
@@ -212,20 +252,20 @@ that given a list of words `ws`, a starting word `s`, a target word `t`, yields:
 
 Here are some examples of use of this function:
 ```Haskell
-let ws = words "bag bat bog cat cog dog fog"
+let ws = words "bag bat bog cat cog dog fog" ⏎
 
-unwords $ ladder ws "bag" "fog"
+unwords $ ladder ws "bag" "fog" ⏎
 "bag bog fog"
 
-unwords $ ladder ws "cat" "dog"
+unwords $ ladder ws "cat" "dog" ⏎
 "cat bat bag bog dog"
 
-unwords $ ladder ws "foo" "dog"
+unwords $ ladder ws "foo" "dog" ⏎
 ""
-unwords $ ladder ws "dog" "qux"
+unwords $ ladder ws "dog" "qux" ⏎
 ""
 
-fmap (filter (\w -> length w == 4) . words) $ readFile "wordlist.txt" ⏎
+ws <- fmap (filter (\w -> length w == 4) . words) $ readFile "wordlist.txt" ⏎
 ladder ws "wood" "iron" ⏎
 ["wood","good","goad","grad","brad","bran","iran","iron"]
 ```
