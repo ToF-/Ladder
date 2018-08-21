@@ -1,4 +1,6 @@
 # Ladder
+This is a guided kata: in a small suite of steps, a program is getting coded, by you the reader. This guide will indicate *what* is to be done at each step, with examples of use of the functions you will create. The *how* is entirely yours to find out. Enjoy!
+ 
 ## Introduction
 A "word ladder" is a list of words having the following characteristics
 - all words have the same number of letters
