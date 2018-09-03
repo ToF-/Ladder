@@ -548,7 +548,7 @@ allVariations "bee" ⏎
 fromList ["aee","bae","bbe","bce","bde","bea","beb","bec","bed","bef","beg","beh","bei","bej","bek","bel","bem","ben","beo","bep","beq","ber","bes","bet","beu","bev","bew","bex","bey","bez","bfe","bge","bhe","bie","bje","bke","ble","bme","bne","boe","bpe","bqe","bre","bse","bte","bue","bve","bwe","bxe","bye","bze","cee","dee","eee","fee","gee","hee","iee","jee","kee","lee","mee","nee","oee","pee","qee","ree","see","tee","uee","vee","wee","xee","yee","zee"]
 ```
 
-### 10 New neighbors
+## 10 New neighbors
 
 Now that we have a function to generate all 1-letter variations of a word, we can rewrite:
 ```Haskell
@@ -600,9 +600,10 @@ main = getArgs >>= checkArgs >>= readWords >>= printLadder
 
     readWords :: [String] -> IO (Dictionary,String,String)
     readWords [f,s,t] = do
-        cs <- fmap (Data.Set.fromList . filter (\w -> length w == length s) . words) $ readFile f 
+        cs <- fmap (Data.Set.fromList . words) $ readFile f 
         return (cs, s, t)
 
     printLadder :: (Dictionary,String,String) -> IO ()
     printLadder (ws,s,t) = putStrLn $ unwords $ ladder ws s t
 ```
+*Can you see other ways to optimize the program?*
