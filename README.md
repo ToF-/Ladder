@@ -510,7 +510,7 @@ suffixes :: String -> [String]
 ```
 that given a word containing the letters  *abc..xyz* will yield all the possible suffixes : *bc..xyz*,*c..xyz*,..,*xyz*,*yz*,*z*,𝞊. Here's an example of use of this function:
 ```Haskell
-prefixes "apple" ⏎
+suffixes "apple" ⏎
 ["pple","ple","le","e",""]
 ```
 ### 9.2 Variations over a letter
@@ -535,7 +535,7 @@ which given a string *w* and a char *c*, will yield the list of words with each 
 variations "apple" '*' ⏎
 ["*pple","a*ple","ap*le","app*e","appl*"]
 ```
-*What is the type of the expression: `map (variation "apple")` ?*
+*What is the type of the expression: `map (variations "apple")` ?*
 
 ### 9.3 Set of all variations
 Using the function `Data.Set.fromList` and `Data.Set.delete`, create a function
